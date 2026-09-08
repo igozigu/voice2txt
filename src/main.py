@@ -9,6 +9,24 @@ import os
 import io
 import traceback
 
+# torch / pyannote가 사용하는 표준 라이브러리 모듈 명시적 import (PyInstaller base_library.zip 트리밍 방지)
+import timeit
+import dis
+import opcode
+import inspect
+import ctypes
+import ctypes.wintypes
+import unittest
+import unittest.mock
+import copy
+import pickle
+import platform
+import statistics
+import fractions
+import decimal
+import concurrent.futures
+import multiprocessing.pool
+
 # GUI(noconsole) 모드에서 sys.stdout/sys.stderr가 None인 경우 발생하는
 # AttributeError: 'NoneType' object has no attribute 'write' 방지
 class SafeStream(io.StringIO):
@@ -34,9 +52,51 @@ def main():
     # 가상환경 .venv site-packages 자동 참조 (frozen 실행 시에도 로컬 패키지 연동)
     from pathlib import Path
     app_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
+
+    # pyvenv.cfg 기반 기본 Python 표준 라이브러리 경로 탐색 및 sys.path 추가
+    cfg_path = app_dir / ".venv" / "pyvenv.cfg"
+    if cfg_path.is_file():
+        try:
+            for line in cfg_path.read_text(encoding="utf-8").splitlines():
+                if line.startswith("home ="):
+                    py_home = Path(line.split("=", 1)[1].strip())
+                    py_lib = py_home / "Lib"
+                    if py_lib.is_dir() and str(py_lib) not in sys.path:
+                        sys.path.append(str(py_lib))
+        except Exception:
+            pass
+
     venv_site = app_dir / ".venv" / "Lib" / "site-packages"
-    if venv_site.is_dir() and str(venv_site) not in sys.path:
-        sys.path.insert(0, str(venv_site))
+    if venv_site.is_dir():
+        if str(venv_site) not in sys.path:
+            sys.path.insert(0, str(venv_site))
+
+        # Windows에서 torch, ctranslate2 및 C-extension DLL 디렉터리 등록
+        dll_dirs = [
+            venv_site / "torch" / "lib",
+            venv_site / "ctranslate2",
+            venv_site / "onnxruntime" / "capi",
+            venv_site / "scipy.libs",
+            venv_site / "numpy.libs",
+            venv_site / "av.libs",
+        ]
+        for d in dll_dirs:
+            if d.is_dir():
+                if hasattr(os, "add_dll_directory"):
+                    try:
+                        os.add_dll_directory(str(d))
+                    except Exception:
+                        pass
+                os.environ["PATH"] = str(d) + ";" + os.environ.get("PATH", "")
+
+    # Python 표준 라이브러리 경로 보강 (PyInstaller 기본 번들에서 누락된 timeit 등 stdlib 모듈 탐색)
+    try:
+        import sysconfig
+        py_stdlib = sysconfig.get_path("stdlib")
+        if py_stdlib and os.path.isdir(py_stdlib) and py_stdlib not in sys.path:
+            sys.path.append(py_stdlib)
+    except Exception:
+        pass
 
     # 로깅 설정
     from src.util.log import setup_logging, get_logger
@@ -56,8 +116,8 @@ def main():
             logger.info("GPU: %s (CUDA %s)", torch.cuda.get_device_name(0), torch.version.cuda)
         else:
             logger.info("GPU 없음 — CPU 모드로 실행")
-    except ImportError:
-        logger.warning("torch를 찾을 수 없습니다")
+    except Exception as e:
+        logger.warning("torch 로드 실패: %s", e)
 
     try:
         from src.app import AppWindow

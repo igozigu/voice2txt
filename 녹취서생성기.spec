@@ -1,8 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_submodules
 
 datas = []
+hiddenimports = ['unittest.mock', 'timeit', 'dis', 'opcode', 'inspect', 'customtkinter', 'windnd']
 datas += collect_data_files('customtkinter')
+hiddenimports += collect_submodules('unittest')
 
 
 a = Analysis(
@@ -10,7 +13,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=['customtkinter', 'windnd'],
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

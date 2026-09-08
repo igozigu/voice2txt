@@ -14,15 +14,32 @@ import threading
 logger = logging.getLogger("voice2txt.pipeline.diarize")
 
 # PyTorch 및 pyannote.audio 동적/안전 로드 지원
+_pyannote_import_error: Optional[str] = None
+
+# 필요 시 DLL 경로 탐색
+try:
+    from pathlib import Path
+    app_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent.parent
+    torch_lib = app_dir / ".venv" / "Lib" / "site-packages" / "torch" / "lib"
+    if torch_lib.is_dir() and hasattr(os, "add_dll_directory"):
+        try:
+            os.add_dll_directory(str(torch_lib))
+        except Exception:
+            pass
+except Exception:
+    pass
+
 try:
     import torch
-except ImportError:
+except Exception as e:
     torch = None
 
 try:
     from pyannote.audio import Pipeline
-except ImportError:
+except Exception as e:
     Pipeline = None
+    _pyannote_import_error = str(e)
+    logger.debug("pyannote.audio 로드 실패: %s", e)
 
 
 @dataclass
@@ -129,8 +146,9 @@ class DiarizationEngine:
         )
 
         if Pipeline is None:
+            err_detail = f": {_pyannote_import_error}" if _pyannote_import_error else ""
             raise ImportError(
-                "pyannote.audio 패키지가 설치되지 않았습니다. "
+                f"pyannote.audio 패키지를 불러올 수 없습니다{err_detail}. "
                 "pip install pyannote.audio 명령으로 설치해 주세요."
             )
 
