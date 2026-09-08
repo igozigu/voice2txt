@@ -43,17 +43,22 @@ def find_ffmpeg() -> Path:
     ffmpeg 실행 파일의 경로를 탐색합니다.
     탐색 순서:
       1. 앱 실행 폴더 (exe와 동일 디렉토리)
-      2. 앱 실행 폴더/_internal/
+      2. CWD 및 _internal/
       3. 시스템 환경변수 PATH
+      4. WinGet 패키지 및 로컬 설치 경로
     탐색 실패 시 FileNotFoundError("ffmpeg.exe를 앱 폴더에 두세요.")를 발생시킵니다.
     """
     app_dir = get_app_dir()
+    cwd = Path.cwd()
 
     candidates = [
         app_dir / "ffmpeg.exe",
         app_dir / "ffmpeg",
         app_dir / "_internal" / "ffmpeg.exe",
         app_dir / "_internal" / "ffmpeg",
+        cwd / "ffmpeg.exe",
+        cwd / "ffmpeg",
+        cwd / "_internal" / "ffmpeg.exe",
     ]
 
     for candidate in candidates:
@@ -66,6 +71,19 @@ def find_ffmpeg() -> Path:
         if path_which:
             return Path(path_which).resolve()
 
+    # WinGet 설치 경로 자동 탐색
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    if local_app_data:
+        winget_links = Path(local_app_data) / "Microsoft" / "WinGet" / "Links" / "ffmpeg.exe"
+        if winget_links.is_file():
+            return winget_links.resolve()
+
+        winget_pkg = Path(local_app_data) / "Microsoft" / "WinGet" / "Packages"
+        if winget_pkg.is_dir():
+            for found in winget_pkg.glob("**/ffmpeg.exe"):
+                if found.is_file():
+                    return found.resolve()
+
     raise FileNotFoundError("ffmpeg.exe를 앱 폴더에 두세요.")
 
 
@@ -74,17 +92,21 @@ def find_ffprobe() -> Optional[Path]:
     ffprobe 실행 파일의 경로를 탐색합니다.
     탐색 순서:
       1. 앱 실행 폴더
-      2. 앱 실행 폴더/_internal/
+      2. CWD 및 _internal/
       3. 시스템 환경변수 PATH
+      4. WinGet 패키지 경로
     찾지 못하면 None을 반환합니다.
     """
     app_dir = get_app_dir()
+    cwd = Path.cwd()
 
     candidates = [
         app_dir / "ffprobe.exe",
         app_dir / "ffprobe",
         app_dir / "_internal" / "ffprobe.exe",
         app_dir / "_internal" / "ffprobe",
+        cwd / "ffprobe.exe",
+        cwd / "ffprobe",
     ]
 
     for candidate in candidates:
@@ -95,6 +117,18 @@ def find_ffprobe() -> Optional[Path]:
         path_which = shutil.which(name)
         if path_which:
             return Path(path_which).resolve()
+
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    if local_app_data:
+        winget_links = Path(local_app_data) / "Microsoft" / "WinGet" / "Links" / "ffprobe.exe"
+        if winget_links.is_file():
+            return winget_links.resolve()
+
+        winget_pkg = Path(local_app_data) / "Microsoft" / "WinGet" / "Packages"
+        if winget_pkg.is_dir():
+            for found in winget_pkg.glob("**/ffprobe.exe"):
+                if found.is_file():
+                    return found.resolve()
 
     return None
 

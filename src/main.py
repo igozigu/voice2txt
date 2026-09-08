@@ -11,6 +11,13 @@ import traceback
 
 def main():
     """앱 시작."""
+    # 가상환경 .venv site-packages 자동 참조 (frozen 실행 시에도 로컬 패키지 연동)
+    from pathlib import Path
+    app_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
+    venv_site = app_dir / ".venv" / "Lib" / "site-packages"
+    if venv_site.is_dir() and str(venv_site) not in sys.path:
+        sys.path.insert(0, str(venv_site))
+
     # 로깅 설정
     from src.util.log import setup_logging, get_logger
     setup_logging()

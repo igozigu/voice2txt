@@ -46,3 +46,9 @@ config.json
 # 배포용 실행 파일(.exe)은 반드시 Git에 포함 (절대 제외 금지)
 !*.exe
 !**/*.exe
+
+# 단, 100MB를 초과하는 외부 바이너리는 제외 (GitHub 파일당 100MB 제한)
+ffmpeg.exe
+ffprobe.exe
+**/ffmpeg.exe
+**/ffprobe.exe

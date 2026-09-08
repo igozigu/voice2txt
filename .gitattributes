@@ -1,0 +1,2 @@
+녹취서생성기.exe filter=lfs diff=lfs merge=lfs -text
+dist/녹취서생성기.exe filter=lfs diff=lfs merge=lfs -text
