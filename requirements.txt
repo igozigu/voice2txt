@@ -1,0 +1,23 @@
+# 녹취서 자동 생성기 의존성
+# Python 3.11 64-bit 필수
+
+# GUI
+customtkinter>=5.2.0
+windnd>=1.0.7
+
+# STT (로컬)
+faster-whisper>=1.0.0
+
+# 화자 분리
+pyannote.audio>=3.1.0
+
+# 딥러닝 프레임워크
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# 오디오 처리
+soundfile>=0.12.0
+numpy>=1.24.0
+
+# 패키징
+pyinstaller>=6.0.0

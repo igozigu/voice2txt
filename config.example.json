@@ -1,0 +1,11 @@
+{
+    "whisper_model": "large-v3",
+    "device": "auto",
+    "compute_type_gpu": "float16",
+    "compute_type_cpu": "int8",
+    "language": "ko",
+    "hf_token": "",
+    "min_speakers": null,
+    "max_speakers": 8,
+    "vad_filter": true
+}
