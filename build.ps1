@@ -92,13 +92,20 @@ if (Test-Path $ReadmeSrc) {
     Write-Host "   README.txt 복사 완료" -ForegroundColor Green
 }
 
-# ── 5. 검증 ──
+# ── 5. 검증 및 루트 최상단 복사 ──
 Write-Host "[5/5] 빌드 결과 검증..." -ForegroundColor Yellow
-if (Test-Path $ExePath) {
+$BuiltExe = if (Test-Path $ExePath) { $ExePath } elseif (Test-Path (Join-Path $DistDir "녹취서생성기.exe")) { (Join-Path $DistDir "녹취서생성기.exe") } else { $null }
+
+if ($BuiltExe) {
+    $RootExe = Join-Path $ProjectRoot "녹취서생성기.exe"
+    Copy-Item $BuiltExe $RootExe -Force
+    Write-Host "   최상단 루트 복사 완료: $RootExe" -ForegroundColor Green
+
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Green
     Write-Host "  ✅ 빌드 성공!" -ForegroundColor Green
-    Write-Host "  $ExePath" -ForegroundColor Green
+    Write-Host "  배포: $BuiltExe" -ForegroundColor Green
+    Write-Host "  최상단: $RootExe" -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor Green
 } else {
     Write-Host ""
