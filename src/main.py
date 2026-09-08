@@ -6,7 +6,27 @@
 """
 import sys
 import os
+import io
 import traceback
+
+# GUI(noconsole) 모드에서 sys.stdout/sys.stderr가 None인 경우 발생하는
+# AttributeError: 'NoneType' object has no attribute 'write' 방지
+class SafeStream(io.StringIO):
+    def write(self, s):
+        return len(s) if s else 0
+    def flush(self):
+        pass
+    def isatty(self):
+        return False
+
+if sys.stdout is None:
+    sys.stdout = SafeStream()
+if sys.stderr is None:
+    sys.stderr = SafeStream()
+
+# huggingface_hub 및 tqdm의 터미널 진행률 출력 비활성화 (GUI 환경 충돌 방지)
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TQDM_DISABLE"] = "1"
 
 
 def main():

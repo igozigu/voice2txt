@@ -57,14 +57,18 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
         file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
-    except Exception as e:
-        sys.stderr.write(f"[WARNING] 로그 파일 핸들러 설정 실패: {e}\n")
+    except Exception:
+        pass
 
-    # 2. 콘솔/표준 에러 핸들러
-    stream_handler = logging.StreamHandler(sys.stderr)
-    stream_handler.setLevel(level)
-    stream_handler.setFormatter(formatter)
-    root_logger.addHandler(stream_handler)
+    # 2. 콘솔/표준 에러 핸들러 (유효한 sys.stderr가 있을 때만 연결)
+    if sys.stderr is not None:
+        try:
+            stream_handler = logging.StreamHandler(sys.stderr)
+            stream_handler.setLevel(level)
+            stream_handler.setFormatter(formatter)
+            root_logger.addHandler(stream_handler)
+        except Exception:
+            pass
 
     _is_logging_setup = True
 

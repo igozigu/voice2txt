@@ -135,6 +135,13 @@ class DiarizationEngine:
             )
 
         try:
+            # GUI 환경에서 tqdm 출력으로 인한 'NoneType' object has no attribute 'write' 방지
+            try:
+                from huggingface_hub.utils import disable_progress_bars
+                disable_progress_bars()
+            except Exception:
+                pass
+
             try:
                 self.pipeline = Pipeline.from_pretrained(
                     "pyannote/speaker-diarization-3.1",
